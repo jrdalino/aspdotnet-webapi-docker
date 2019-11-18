@@ -21,20 +21,118 @@ $ git --version
 ## Part 1: Setup Steps
 ### 1.1: Create a folder to hold the project
 ```
-$ mkdir aspdotnet-webapi-docker
+$ mkdir TodoApi
 ```
 ### 1.2: Navigate to that directory
 ```
-$ cd aspdotnet-webapi-docker
+$ cd TodoAPI
 ```
 
 ## Part 2: Create the ASP.NET Web API Hello World Application
-### 2.1: Create the app.py file
+### 2.1: Create web project using Visual Studio and Test the API Works
+
+### 2.2: Add Entity Framwork Packages
+```
+$ dotnet add package Microsoft.EntityFrameworkCore.SqlServer
+$ dotnet add package Microsoft.EntityFrameworkCore.InMemory
+```
+
+### 2.3 Add a model Class
+
+```
+namespace TodoApi.Models
+{
+    public class TodoItem
+    {
+        public long Id { get; set; }
+        public string Name { get; set; }
+        public bool IsComplete { get; set; }
+    }
+}
+```
+
+### 2.4 Add Database Context
+
+```
+using Microsoft.EntityFrameworkCore;
+
+namespace TodoApi.Models
+{
+    public class TodoContext : DbContext
+    {
+        public TodoContext(DbContextOptions<TodoContext> options)
+            : base(options)
+        {
+        }
+
+        public DbSet<TodoItem> TodoItems { get; set; }
+    }
+}
+```
+
+### 2.5 Register the database context > Startup.cs
+```
+// Unused usings removed
+using Microsoft.AspNetCore.Builder;
+using Microsoft.AspNetCore.Hosting;
+using Microsoft.Extensions.Configuration;
+using Microsoft.Extensions.DependencyInjection;
+using Microsoft.Extensions.Hosting;
+using Microsoft.EntityFrameworkCore;
+using TodoApi.Models;
+
+namespace TodoApi
+{
+    public class Startup
+    {
+        public Startup(IConfiguration configuration)
+        {
+            Configuration = configuration;
+        }
+
+        public IConfiguration Configuration { get; }
+
+        public void ConfigureServices(IServiceCollection services)
+        {
+            services.AddDbContext<TodoContext>(opt =>
+               opt.UseInMemoryDatabase("TodoList"));
+            services.AddControllers();
+        }
+
+        public void Configure(IApplicationBuilder app, IWebHostEnvironment env)
+        {
+            if (env.IsDevelopment())
+            {
+                app.UseDeveloperExceptionPage();
+            }
+
+            app.UseHttpsRedirection();
+
+            app.UseRouting();
+
+            app.UseAuthorization();
+
+            app.UseEndpoints(endpoints =>
+            {
+                endpoints.MapControllers();
+            });
+        }
+    }
+}
+```
+
+### 2.6 Scaffold the controller
+```
+$ dotnet add package Microsoft.VisualStudio.Web.CodeGeneration.Design
+$ dotnet add package Microsoft.EntityFrameworkCore.Design
+$ dotnet tool install --global dotnet-aspnet-codegenerator
+$ dotnet aspnet-codegenerator controller -name TodoItemsController -async -api -m TodoItem -dc TodoContext -outDir Controllers
+```
+
+### 2.7 Replace the PostTodoItem create method
 
 
-### 2.2: Create the requirements.txt file
-
-### 2.3: Create the Dockerfile
+### 2.X: Create the Dockerfile
 
 ## Part 3: Let's Build, Tag, Run our app locally
 ### 3.1: Build and tag our docker image
